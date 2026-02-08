@@ -26,13 +26,10 @@ pub fn main() void {
     };
 
     var ball_pos = Vec2{
-        .x = paddle_pos.x,
+        .x = @as(f32, (window_width - ball_size)) / 2.0,
         .y = paddle_pos.y - 50,
     };
-    const ball_velocity = Vec2{
-        .x = 0,
-        .y = 1
-    };
+    var ball_velocity = Vec2{ .x = 5, .y = 5 };
 
     while (!rl.WindowShouldClose()) {
         // -- Modify world --
@@ -45,8 +42,33 @@ pub fn main() void {
         if (paddle_pos.x > window_width - paddle_width) paddle_pos.x = window_width - paddle_width;
 
         // Move ball
-        ball_pos.y += ball_velocity.y;
         ball_pos.x += ball_velocity.x;
+        ball_pos.y += ball_velocity.y;
+
+        // Clamp ball
+        if (ball_pos.x < 0) {
+            ball_velocity.x = -ball_velocity.x;
+            ball_pos.x = -ball_pos.x;
+        }
+
+        const ball_x_edge = ball_pos.x + ball_size;
+        var overshoot = ball_x_edge - window_width;
+        if (overshoot > 0) {
+            ball_velocity.x = -ball_velocity.x;
+            ball_pos.x = window_width - overshoot - ball_size;
+        }
+
+        if (ball_pos.y < 0) {
+            ball_velocity.y = -ball_velocity.y;
+            ball_pos.y = -ball_pos.y;
+        }
+
+        const ball_y_edge = ball_pos.y + ball_size;
+        overshoot = ball_y_edge - window_height;
+        if (overshoot > 0) {
+            ball_velocity.y = -ball_velocity.y;
+            ball_pos.y = window_height - overshoot - ball_size;
+        }
 
         // -- Render --
         rl.BeginDrawing();
