@@ -47,28 +47,32 @@ pub fn main() void {
         ball_pos.y += ball_velocity.y;
 
         // Clamp ball
-        if (ball_pos.x < 0) {
-            ball_velocity.x = -ball_velocity.x;
-            ball_pos.x = -ball_pos.x;
+        if (ball_velocity.x > 0) {
+            const ball_x_edge = ball_pos.x + ball_size;
+            const overshoot = ball_x_edge - window_width;
+            if (overshoot > 0) {
+                ball_velocity.x = -ball_velocity.x;
+                ball_pos.x = window_width - overshoot - ball_size;
+            }
+        } else {
+            if (ball_pos.x < 0) {
+                ball_velocity.x = -ball_velocity.x;
+                ball_pos.x = -ball_pos.x;
+            }
         }
 
-        const ball_x_edge = ball_pos.x + ball_size;
-        var overshoot = ball_x_edge - window_width;
-        if (overshoot > 0) {
-            ball_velocity.x = -ball_velocity.x;
-            ball_pos.x = window_width - overshoot - ball_size;
-        }
-
-        if (ball_pos.y < 0) {
-            ball_velocity.y = -ball_velocity.y;
-            ball_pos.y = -ball_pos.y;
-        }
-
-        const ball_y_edge = ball_pos.y + ball_size;
-        overshoot = ball_y_edge - window_height;
-        if (overshoot > 0) {
-            ball_velocity.y = -ball_velocity.y;
-            ball_pos.y = window_height - overshoot - ball_size;
+        if (ball_velocity.y > 0) {
+            const ball_y_edge = ball_pos.y + ball_size;
+            const overshoot = ball_y_edge - window_height;
+            if (overshoot > 0) {
+                ball_velocity.y = -ball_velocity.y;
+                ball_pos.y = window_height - overshoot - ball_size;
+            }
+        } else {
+            if (ball_pos.y < 0) {
+                ball_velocity.y = -ball_velocity.y;
+                ball_pos.y = -ball_pos.y;
+            }
         }
 
         // -- Render --
