@@ -1,4 +1,5 @@
 const rl = @cImport(@cInclude("raylib.h"));
+const std = @import("std");
 
 const window_width = 800;
 const window_height = 600;
@@ -80,6 +81,10 @@ pub fn main() void {
         // Draw Ball
         rl.DrawRectangle(@intFromFloat(ball_pos.x), @intFromFloat(ball_pos.y), ball_size, ball_size, rl.DARKGRAY);
 
+        rl.DrawFPS(10, 10);
+        var buf: [64]u8 = undefined;
+        const text = std.fmt.bufPrintZ(&buf, "{d:.2}ms", .{rl.GetFrameTime() * 1000.0}) catch "??";
+        rl.DrawText(@ptrCast(text.ptr), 10, 30, 20, rl.DARKGRAY);
         rl.EndDrawing();
     }
 }
