@@ -1,27 +1,33 @@
-const std = @import("std");
-const breakout = @import("breakout");
+const rl = @cImport(@cInclude("raylib.h"));
 
-pub fn main() !void {
-    // Prints to stderr, ignoring potential errors.
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
-    try breakout.bufferedPrint();
-}
+const window_width = 800;
+const window_height = 600;
 
-test "simple test" {
-    const gpa = std.testing.allocator;
-    var list: std.ArrayList(i32) = .empty;
-    defer list.deinit(gpa); // Try commenting this out and see if zig detects the memory leak!
-    try list.append(gpa, 42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+const paddle_width = 100;
+const paddle_height = 20;
+const paddle_y = 550;
+const paddle_speed = 8;
 
-test "fuzz example" {
-    const Context = struct {
-        fn testOne(context: @This(), input: []const u8) anyerror!void {
-            _ = context;
-            // Try passing `--fuzz` to `zig build test` and see if it manages to fail this test case!
-            try std.testing.expect(!std.mem.eql(u8, "canyoufindme", input));
-        }
-    };
-    try std.testing.fuzz(Context{}, Context.testOne, .{});
+pub fn main() void {
+    rl.InitWindow(window_width, window_height, "Breakout");
+    defer rl.CloseWindow();
+
+    rl.SetTargetFPS(60);
+
+    var paddle_x: f32 = @as(f32, (window_width - paddle_width)) / 2.0;
+
+    while (!rl.WindowShouldClose()) {
+        // Update
+        if (rl.IsKeyDown(rl.KEY_LEFT)) paddle_x -= paddle_speed;
+        if (rl.IsKeyDown(rl.KEY_RIGHT)) paddle_x += paddle_speed;
+
+        if (paddle_x < 0) paddle_x = 0;
+        if (paddle_x > window_width - paddle_width) paddle_x = window_width - paddle_width;
+
+        // Draw
+        rl.BeginDrawing();
+        rl.ClearBackground(rl.RAYWHITE);
+        rl.DrawRectangle(@intFromFloat(paddle_x), paddle_y, paddle_width, paddle_height, rl.DARKGRAY);
+        rl.EndDrawing();
+    }
 }
