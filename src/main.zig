@@ -29,6 +29,10 @@ pub fn main() void {
         .x = paddle_pos.x,
         .y = paddle_pos.y - 50,
     };
+    const ball_velocity = Vec2{
+        .x = 0,
+        .y = 1
+    };
 
     while (!rl.WindowShouldClose()) {
         // -- Modify world --
@@ -41,7 +45,8 @@ pub fn main() void {
         if (paddle_pos.x > window_width - paddle_width) paddle_pos.x = window_width - paddle_width;
 
         // Move ball
-        ball_pos.y += 1;
+        ball_pos.y += ball_velocity.y;
+        ball_pos.x += ball_velocity.x;
 
         // -- Render --
         rl.BeginDrawing();
