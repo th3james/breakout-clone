@@ -86,6 +86,14 @@ pub fn main() void {
     var ball_velocity = zero_velocity;
 
     while (!rl.WindowShouldClose()) {
+        // Move paddle
+        if (rl.IsKeyDown(rl.KEY_LEFT)) paddle.pos.x -= paddle_speed;
+        if (rl.IsKeyDown(rl.KEY_RIGHT)) paddle.pos.x += paddle_speed;
+
+        // clamp paddle to world space
+        if (paddle.pos.x < 0) paddle.pos.x = 0;
+        if (paddle.pos.x > window_width - paddle_width) paddle.pos.x = window_width - paddle_width;
+
         switch (game_state) {
             .ready => {
                 if (rl.IsKeyDown(rl.KEY_SPACE)) {
@@ -95,15 +103,6 @@ pub fn main() void {
                 }
             },
             .playing => {
-                // -- Modify world --
-                // Move paddle
-                if (rl.IsKeyDown(rl.KEY_LEFT)) paddle.pos.x -= paddle_speed;
-                if (rl.IsKeyDown(rl.KEY_RIGHT)) paddle.pos.x += paddle_speed;
-
-                // clamp paddle to world space
-                if (paddle.pos.x < 0) paddle.pos.x = 0;
-                if (paddle.pos.x > window_width - paddle_width) paddle.pos.x = window_width - paddle_width;
-
                 // Move ball
                 ball.pos.x += ball_velocity.x;
                 ball.pos.y += ball_velocity.y;
