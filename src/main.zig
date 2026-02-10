@@ -25,6 +25,21 @@ const ball_size = 20;
 
 const GameState = enum { ready, playing };
 
+const AxisState = struct { position: f32, velocity: f32 };
+fn wall_bounce(axis_state: AxisState, size: f32, boundary: f32) AxisState {
+    if (axis_state.velocity > 0) {
+        const overshoot = (axis_state.position + size) - boundary;
+        if (overshoot > 0) {
+            return .{ .position = (boundary - overshoot - size), .velocity = -axis_state.velocity };
+        }
+    } else {
+        if (axis_state.position < 0) {
+            return .{ .position = -axis_state.position, .velocity = -axis_state.velocity };
+        }
+    }
+    return axis_state;
+}
+
 fn bounce(ball: Rectangle, thing: Rectangle) Velocity {
     const overlap_x = @min(ball.pos.x + ball.width, thing.pos.x + thing.width) - @max(ball.pos.x, thing.pos.x);
     const overlap_y = @min(ball.pos.y + ball.height, thing.pos.y + thing.height) - @max(ball.pos.y, thing.pos.y);
@@ -108,33 +123,18 @@ pub fn main() void {
                 ball.pos.y += ball_velocity.y;
 
                 // Clamp ball to world space
-                if (ball_velocity.x > 0) {
-                    const ball_x_edge = ball.pos.x + ball_size;
-                    const overshoot = ball_x_edge - window_width;
-                    if (overshoot > 0) {
-                        ball_velocity.x = -ball_velocity.x;
-                        ball.pos.x = window_width - overshoot - ball_size;
-                    }
-                } else {
-                    if (ball.pos.x < 0) {
-                        ball_velocity.x = -ball_velocity.x;
-                        ball.pos.x = -ball.pos.x;
-                    }
-                }
+                const x_bounce = wall_bounce(.{ .position = ball.pos.x, .velocity = ball_velocity.x }, ball.width, window_width);
+                ball_velocity.x = x_bounce.velocity;
+                ball.pos.x = x_bounce.position;
 
-                if (ball_velocity.y > 0) {
-                    const ball_y_edge = ball.pos.y + ball_size;
-                    const overshoot = ball_y_edge - window_height;
-                    if (overshoot > 0) {
-                        ball_velocity = zero_velocity;
-                        ball.pos = ball_start_pos;
-                        game_state = .ready;
-                    }
+                const y_bounce = wall_bounce(.{ .position = ball.pos.y, .velocity = ball_velocity.y }, ball.height, window_height);
+                if (y_bounce.velocity != ball_velocity.y and ball_velocity.y > 0) {
+                    ball_velocity = zero_velocity;
+                    ball.pos = ball_start_pos;
+                    game_state = .ready;
                 } else {
-                    if (ball.pos.y < 0) {
-                        ball_velocity.y = -ball_velocity.y;
-                        ball.pos.y = -ball.pos.y;
-                    }
+                    ball_velocity.y = y_bounce.velocity;
+                    ball.pos.y = y_bounce.position;
                 }
 
                 // Bounce off paddle
