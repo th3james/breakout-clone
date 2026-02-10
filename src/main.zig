@@ -122,17 +122,17 @@ pub fn main() void {
                 ball.pos.x += ball_velocity.x;
                 ball.pos.y += ball_velocity.y;
 
-                // Clamp ball to world space
                 const x_bounce = wall_bounce(.{ .position = ball.pos.x, .velocity = ball_velocity.x }, ball.width, window_width);
                 ball_velocity.x = x_bounce.velocity;
                 ball.pos.x = x_bounce.position;
 
-                const y_bounce = wall_bounce(.{ .position = ball.pos.y, .velocity = ball_velocity.y }, ball.height, window_height);
-                if (y_bounce.velocity != ball_velocity.y and ball_velocity.y > 0) {
+                if (ball.pos.y + ball.height > window_height and ball_velocity.y > 0) {
+                    // We died
                     ball_velocity = zero_velocity;
                     ball.pos = ball_start_pos;
                     game_state = .ready;
                 } else {
+                    const y_bounce = wall_bounce(.{ .position = ball.pos.y, .velocity = ball_velocity.y }, ball.height, window_height);
                     ball_velocity.y = y_bounce.velocity;
                     ball.pos.y = y_bounce.position;
                 }
