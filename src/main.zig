@@ -23,6 +23,8 @@ const paddle_speed = 8;
 
 const ball_size = 20;
 
+const GameState = enum { ready, playing };
+
 fn bounce(ball: Rectangle, thing: Rectangle) Velocity {
     const overlap_x = @min(ball.pos.x + ball.width, thing.pos.x + thing.width) - @max(ball.pos.x, thing.pos.x);
     const overlap_y = @min(ball.pos.y + ball.height, thing.pos.y + thing.height) - @max(ball.pos.y, thing.pos.y);
@@ -70,65 +72,82 @@ pub fn main() void {
         .x = @as(f32, (window_width - ball_size)) / 2.0,
         .y = paddle.pos.y - 50,
     };
+
     var ball = Rectangle{
         .pos = ball_start_pos,
         .width = ball_size,
         .height = ball_size,
     };
-    const start_velocity = Velocity{ .x = 5, .y = 5 };
-    var ball_velocity = start_velocity;
+
+    var game_state = GameState.ready;
+
+    const zero_velocity = Velocity{ .x = 0, .y = 0 };
+    const start_velocity = Velocity{ .x = 5, .y = -5 };
+    var ball_velocity = zero_velocity;
 
     while (!rl.WindowShouldClose()) {
-        // -- Modify world --
-        // Move paddle
-        if (rl.IsKeyDown(rl.KEY_LEFT)) paddle.pos.x -= paddle_speed;
-        if (rl.IsKeyDown(rl.KEY_RIGHT)) paddle.pos.x += paddle_speed;
+        switch (game_state) {
+            .ready => {
+                if (rl.IsKeyDown(rl.KEY_SPACE)) {
+                    ball.pos = ball_start_pos;
+                    ball_velocity = start_velocity;
+                    game_state = .playing;
+                }
+            },
+            .playing => {
+                // -- Modify world --
+                // Move paddle
+                if (rl.IsKeyDown(rl.KEY_LEFT)) paddle.pos.x -= paddle_speed;
+                if (rl.IsKeyDown(rl.KEY_RIGHT)) paddle.pos.x += paddle_speed;
 
-        // clamp paddle to world space
-        if (paddle.pos.x < 0) paddle.pos.x = 0;
-        if (paddle.pos.x > window_width - paddle_width) paddle.pos.x = window_width - paddle_width;
+                // clamp paddle to world space
+                if (paddle.pos.x < 0) paddle.pos.x = 0;
+                if (paddle.pos.x > window_width - paddle_width) paddle.pos.x = window_width - paddle_width;
 
-        // Move ball
-        ball.pos.x += ball_velocity.x;
-        ball.pos.y += ball_velocity.y;
+                // Move ball
+                ball.pos.x += ball_velocity.x;
+                ball.pos.y += ball_velocity.y;
 
-        // Clamp ball to world space
-        if (ball_velocity.x > 0) {
-            const ball_x_edge = ball.pos.x + ball_size;
-            const overshoot = ball_x_edge - window_width;
-            if (overshoot > 0) {
-                ball_velocity.x = -ball_velocity.x;
-                ball.pos.x = window_width - overshoot - ball_size;
-            }
-        } else {
-            if (ball.pos.x < 0) {
-                ball_velocity.x = -ball_velocity.x;
-                ball.pos.x = -ball.pos.x;
-            }
-        }
+                // Clamp ball to world space
+                if (ball_velocity.x > 0) {
+                    const ball_x_edge = ball.pos.x + ball_size;
+                    const overshoot = ball_x_edge - window_width;
+                    if (overshoot > 0) {
+                        ball_velocity.x = -ball_velocity.x;
+                        ball.pos.x = window_width - overshoot - ball_size;
+                    }
+                } else {
+                    if (ball.pos.x < 0) {
+                        ball_velocity.x = -ball_velocity.x;
+                        ball.pos.x = -ball.pos.x;
+                    }
+                }
 
-        if (ball_velocity.y > 0) {
-            const ball_y_edge = ball.pos.y + ball_size;
-            const overshoot = ball_y_edge - window_height;
-            if (overshoot > 0) {
-                ball_velocity = start_velocity;
-                ball.pos = ball_start_pos;
-            }
-        } else {
-            if (ball.pos.y < 0) {
-                ball_velocity.y = -ball_velocity.y;
-                ball.pos.y = -ball.pos.y;
-            }
-        }
+                if (ball_velocity.y > 0) {
+                    const ball_y_edge = ball.pos.y + ball_size;
+                    const overshoot = ball_y_edge - window_height;
+                    if (overshoot > 0) {
+                        ball_velocity = zero_velocity;
+                        ball.pos = ball_start_pos;
+                        game_state = .ready;
+                    }
+                } else {
+                    if (ball.pos.y < 0) {
+                        ball_velocity.y = -ball_velocity.y;
+                        ball.pos.y = -ball.pos.y;
+                    }
+                }
 
-        // Bounce off paddle
-        const rebound = bounce(ball, paddle);
-        if (rebound.x != 0) {
-            ball.pos.x += rebound.x;
-            ball_velocity.x = -ball_velocity.x;
-        } else if (rebound.y != 0) {
-            ball.pos.y += rebound.y;
-            ball_velocity.y = -ball_velocity.y;
+                // Bounce off paddle
+                const rebound = bounce(ball, paddle);
+                if (rebound.x != 0) {
+                    ball.pos.x += rebound.x;
+                    ball_velocity.x = -ball_velocity.x;
+                } else if (rebound.y != 0) {
+                    ball.pos.y += rebound.y;
+                    ball_velocity.y = -ball_velocity.y;
+                }
+            },
         }
 
         // -- Render --
